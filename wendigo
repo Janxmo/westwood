@@ -1,0 +1,418 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "West Wood Pre-Alpha",
+    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+    LoadingTitle = "WestWood",
+    LoadingSubtitle = "by Xeno",
+    Theme = {
+        TextColor = Color3.fromRGB(143, 46, 62),
+    
+        Background = Color3.fromRGB(3, 2, 2),
+        Topbar = Color3.fromRGB(0, 0, 0),
+        Shadow = Color3.fromRGB(82, 29, 29),
+    
+        NotificationBackground = Color3.fromRGB(0, 0, 0),
+        NotificationActionsBackground = Color3.fromRGB(207, 204, 204),
+    
+        TabBackground = Color3.fromRGB(0, 0, 0),
+        TabStroke = Color3.fromRGB(255, 255, 255),
+        TabBackgroundSelected = Color3.fromRGB(0, 0, 0),
+        TabTextColor = Color3.fromRGB(255, 230, 255),
+        SelectedTabTextColor = Color3.fromRGB(230, 230, 230),
+    
+        ElementBackground = Color3.fromRGB(0, 0, 0),
+        ElementBackgroundHover = Color3.fromRGB(0, 0, 0),
+        SecondaryElementBackground = Color3.fromRGB(0, 0, 0),
+        ElementStroke = Color3.fromRGB(71, 24, 24),
+        SecondaryElementStroke = Color3.fromRGB(71, 24, 24),
+                
+        SliderBackground = Color3.fromRGB(0, 0, 0),
+        SliderProgress = Color3.fromRGB(0, 0, 0),
+        SliderStroke = Color3.fromRGB(230, 230, 230),
+    
+        ToggleBackground = Color3.fromRGB(0, 0, 0),
+        ToggleEnabled = Color3.fromRGB(207, 204, 204),
+        ToggleDisabled = Color3.fromRGB(255, 255, 255),
+        ToggleEnabledStroke = Color3.fromRGB(0, 0, 0),
+        ToggleDisabledStroke = Color3.fromRGB(0, 0, 0),
+        ToggleEnabledOuterStroke = Color3.fromRGB(71, 24, 24),
+        ToggleDisabledOuterStroke = Color3.fromRGB(71, 24, 24),
+    
+        DropdownSelected = Color3.fromRGB(71, 24, 24),
+        DropdownUnselected = Color3.fromRGB(0, 0, 0),
+    
+        InputBackground = Color3.fromRGB(0, 0, 0),
+        InputStroke = Color3.fromRGB(65, 65, 65),
+        PlaceholderColor = Color3.fromRGB(71, 24, 24)
+    }, -- Check https://docs.sirius.menu/rayfield/configuration/themes
+ 
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+ 
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil, -- Create a custom folder for your hub/game
+       FileName = "WestWood Premium"
+    },
+ 
+    Discord = {
+       Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+       Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+    },
+ 
+    KeySystem = false, -- Set this to true to use our key system
+    KeySettings = {
+       Title = "Untitled",
+       Subtitle = "Key System",
+       Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+       Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+    }
+ })
+
+local Tab = Window:CreateTab("Main Tab", "syringe")
+
+-- Services
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+-- ESP variables
+local espTag = nil
+local espConnection = nil
+
+-- ESP functions
+local function createESP()
+	local model = workspace:FindFirstChild("AI") and workspace.AI:FindFirstChild("WendigoAI")
+	if not model then return end
+
+	local hrp = model:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local tag = Drawing.new("Text")
+	tag.Size = 14
+	tag.Center = true
+	tag.Outline = true
+	tag.Color = Color3.fromRGB(255, 85, 0)
+	tag.Text = "WendigoAI"
+	tag.Visible = true
+
+	espTag = {
+		Model = model,
+		Part = hrp,
+		Tag = tag
+	}
+end
+
+local function removeESP()
+	if espTag and espTag.Tag then
+		espTag.Tag:Remove()
+	end
+	espTag = nil
+
+	if espConnection then
+		espConnection:Disconnect()
+		espConnection = nil
+	end
+end
+
+-- Rayfield Button
+local Button = Tab:CreateButton({
+	Name = "Wendigo ESP",
+	Callback = function()
+		removeESP() -- Clear existing to avoid stacking
+		createESP()
+
+		-- Start ESP loop
+		espConnection = RunService.RenderStepped:Connect(function()
+			if not espTag or not espTag.Model or not espTag.Model.Parent then
+				removeESP()
+				createESP()
+			end
+
+			if espTag and espTag.Part and espTag.Part:IsA("BasePart") then
+				local screenPos, onScreen = Camera:WorldToViewportPoint(espTag.Part.Position)
+				local distance = (Camera.CFrame.Position - espTag.Part.Position).Magnitude
+
+				espTag.Tag.Position = Vector2.new(screenPos.X, screenPos.Y - 20)
+				espTag.Tag.Text = string.format("WendigoAI [%.0f]", distance)
+				espTag.Tag.Visible = onScreen
+			end
+		end)
+	end,
+})
+
+
+local Divider = Tab:CreateDivider()
+
+local Section = Tab:CreateSection("The ESP on Wendigo only works at night ")
+
+ local Button = Tab:CreateButton({
+    Name = "Noclip",
+    Callback = function()
+        local Noclip = nil
+        local Clip = nil
+        
+        function noclip()
+            Clip = false
+            local function Nocl()
+                if Clip == false and game.Players.LocalPlayer.Character ~= nil then
+                    for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                        if v:IsA('BasePart') and v.CanCollide and v.Name ~= floatName then
+                            v.CanCollide = false
+                        end
+                    end
+                end
+                wait(0.21) -- basic optimization
+            end
+            Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
+        end
+        
+        function clip()
+            if Noclip then Noclip:Disconnect() end
+            Clip = true
+        end
+        
+        noclip() -- to toggle noclip() and clip()game.Players.LocalPlayer.Characterv.Namev.CanCollide
+    end,
+ })
+
+ local Section = Tab:CreateSection("Reset if you want it gone")
+
+ local Button = Tab:CreateButton({
+    Name = "Player ESP",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Exunys-ESP/main/src/ESP.lua"))()
+        ExunysDeveloperESP()
+    end,
+ })
+
+ local Tab = Window:CreateTab("Lighting", "zap")
+
+ local Button = Tab:CreateButton({
+    Name = "Fullbright",
+    Callback = function()
+        if not _G.FullBrightExecuted then
+
+            _G.FullBrightEnabled = false
+        
+            _G.NormalLightingSettings = {
+                Brightness = game:GetService("Lighting").Brightness,
+                ClockTime = game:GetService("Lighting").ClockTime,
+                FogEnd = game:GetService("Lighting").FogEnd,
+                GlobalShadows = game:GetService("Lighting").GlobalShadows,
+                Ambient = game:GetService("Lighting").Ambient
+            }
+        
+            game:GetService("Lighting"):GetPropertyChangedSignal("Brightness"):Connect(function()
+                if game:GetService("Lighting").Brightness ~= 1 and game:GetService("Lighting").Brightness ~= _G.NormalLightingSettings.Brightness then
+                    _G.NormalLightingSettings.Brightness = game:GetService("Lighting").Brightness
+                    if not _G.FullBrightEnabled then
+                        repeat
+                            wait()
+                        until _G.FullBrightEnabled
+                    end
+                    game:GetService("Lighting").Brightness = 1
+                end
+            end)
+        
+            game:GetService("Lighting"):GetPropertyChangedSignal("ClockTime"):Connect(function()
+                if game:GetService("Lighting").ClockTime ~= 12 and game:GetService("Lighting").ClockTime ~= _G.NormalLightingSettings.ClockTime then
+                    _G.NormalLightingSettings.ClockTime = game:GetService("Lighting").ClockTime
+                    if not _G.FullBrightEnabled then
+                        repeat
+                            wait()
+                        until _G.FullBrightEnabled
+                    end
+                    game:GetService("Lighting").ClockTime = 12
+                end
+            end)
+        
+            game:GetService("Lighting"):GetPropertyChangedSignal("FogEnd"):Connect(function()
+                if game:GetService("Lighting").FogEnd ~= 786543 and game:GetService("Lighting").FogEnd ~= _G.NormalLightingSettings.FogEnd then
+                    _G.NormalLightingSettings.FogEnd = game:GetService("Lighting").FogEnd
+                    if not _G.FullBrightEnabled then
+                        repeat
+                            wait()
+                        until _G.FullBrightEnabled
+                    end
+                    game:GetService("Lighting").FogEnd = 786543
+                end
+            end)
+        
+            game:GetService("Lighting"):GetPropertyChangedSignal("GlobalShadows"):Connect(function()
+                if game:GetService("Lighting").GlobalShadows ~= false and game:GetService("Lighting").GlobalShadows ~= _G.NormalLightingSettings.GlobalShadows then
+                    _G.NormalLightingSettings.GlobalShadows = game:GetService("Lighting").GlobalShadows
+                    if not _G.FullBrightEnabled then
+                        repeat
+                            wait()
+                        until _G.FullBrightEnabled
+                    end
+                    game:GetService("Lighting").GlobalShadows = false
+                end
+            end)
+        
+            game:GetService("Lighting"):GetPropertyChangedSignal("Ambient"):Connect(function()
+                if game:GetService("Lighting").Ambient ~= Color3.fromRGB(178, 178, 178) and game:GetService("Lighting").Ambient ~= _G.NormalLightingSettings.Ambient then
+                    _G.NormalLightingSettings.Ambient = game:GetService("Lighting").Ambient
+                    if not _G.FullBrightEnabled then
+                        repeat
+                            wait()
+                        until _G.FullBrightEnabled
+                    end
+                    game:GetService("Lighting").Ambient = Color3.fromRGB(178, 178, 178)
+                end
+            end)
+        
+            game:GetService("Lighting").Brightness = 1
+            game:GetService("Lighting").ClockTime = 12
+            game:GetService("Lighting").FogEnd = 786543
+            game:GetService("Lighting").GlobalShadows = false
+            game:GetService("Lighting").Ambient = Color3.fromRGB(178, 178, 178)
+        
+            local LatestValue = true
+            spawn(function()
+                repeat
+                    wait()
+                until _G.FullBrightEnabled
+                while wait() do
+                    if _G.FullBrightEnabled ~= LatestValue then
+                        if not _G.FullBrightEnabled then
+                            game:GetService("Lighting").Brightness = _G.NormalLightingSettings.Brightness
+                            game:GetService("Lighting").ClockTime = _G.NormalLightingSettings.ClockTime
+                            game:GetService("Lighting").FogEnd = _G.NormalLightingSettings.FogEnd
+                            game:GetService("Lighting").GlobalShadows = _G.NormalLightingSettings.GlobalShadows
+                            game:GetService("Lighting").Ambient = _G.NormalLightingSettings.Ambient
+                        else
+                            game:GetService("Lighting").Brightness = 1
+                            game:GetService("Lighting").ClockTime = 12
+                            game:GetService("Lighting").FogEnd = 786543
+                            game:GetService("Lighting").GlobalShadows = false
+                            game:GetService("Lighting").Ambient = Color3.fromRGB(178, 178, 178)
+                        end
+                        LatestValue = not LatestValue
+                    end
+                end
+            end)
+        end
+        
+        _G.FullBrightExecuted = true
+        _G.FullBrightEnabled = not _G.FullBrightEnabled
+    end,
+
+ })
+
+ local Button = Tab:CreateButton({
+    Name = "Remove Sky",
+    Callback = function()
+local lighting = game:GetService("Lighting")
+
+for _, child in pairs(lighting:GetChildren()) do
+    if child:IsA("Sky") then
+        child:Destroy()
+        print("Removed sky:", child.Name)
+    end
+end
+    end,
+ })
+ 
+local Section = Tab:CreateSection("Remove them both")
+
+local Tab = Window:CreateTab("Misc Tab", "rewind")
+
+local Camera = workspace.CurrentCamera
+
+local Slider = Tab:CreateSlider({
+   Name = "FOV Adjust",
+   Range = {40, 120}, -- typical FOV range
+   Increment = 1,
+   Suffix = " FOV",
+   CurrentValue = Camera.FieldOfView, -- set it to the current camera FOV
+   Flag = "FOVSlider", -- make sure the flag is unique
+   Callback = function(Value)
+       Camera.FieldOfView = Value
+   end,
+})
+
+-- Optionally, you can use RenderStepped to keep enforcing the walkspeed if it's overridden
+game:GetService("RunService").RenderStepped:Connect(function()
+    local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+    if humanoid and humanoid.WalkSpeed ~= Slider.CurrentValue then
+        humanoid.WalkSpeed = Slider.CurrentValue
+    end
+end)
+
+local Tab = Window:CreateTab("Teleport", 4483362458) -- Title, Image
+
+-- Teleport Coordinates
+local teleportPosition = Vector3.new(-2116.91, 8.13, -1782.53)
+
+-- Button
+local TeleportButton = Tab:CreateButton({
+	Name = "Generator",
+	Callback = function()
+		local player = game.Players.LocalPlayer
+		if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			player.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+		end
+	end,
+})
+
+-- Teleport Coordinates
+local teleportPosition = Vector3.new(-1853.11, 9.66, -1850.50)
+
+-- Button
+local TeleportButton = Tab:CreateButton({
+	Name = "Church",
+	Callback = function()
+		local player = game.Players.LocalPlayer
+		if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			player.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+		end
+	end,
+})
+
+-- Teleport Coordinates
+local teleportPosition = Vector3.new(-1808.80, -0.30, -1345.92)
+
+-- Button
+local TeleportButton = Tab:CreateButton({
+	Name = "Information Center",
+	Callback = function()
+		local player = game.Players.LocalPlayer
+		if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			player.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+		end
+	end,
+})
+
+-- Teleport Coordinates
+local teleportPosition = Vector3.new(-1843.16, -0.20, -1468.88)
+
+-- Button
+local TeleportButton = Tab:CreateButton({
+	Name = "General Store",
+	Callback = function()
+		local player = game.Players.LocalPlayer
+		if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			player.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+		end
+	end,
+})
+
+-- Teleport Coordinates
+local teleportPosition = Vector3.new(-2087.09, 8.13, -1018.77)
+
+-- Button
+local TeleportButton = Tab:CreateButton({
+    Name = "The Dealer",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+        end
+    end,
+})
